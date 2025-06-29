@@ -1,0 +1,16 @@
+﻿@page "/UserPages/DemoProduct"
+
+<h2 class="text-primary">DemoProduct</h2>
+<p>Favorite Count : @FavoriteCount</p>
+<div class="border p-2 mt-2">
+	<div class="row>" >
+		@foreach(var prod in ProductList)
+		{
+			<_IndvidualProduct Product="prod" OnFavoriteUpdated="FavoriteCountChange">
+
+			</_IndvidualProduct>
+		}
+	</div>
+</div>
+
+

@@ -1,0 +1,73 @@
+﻿@page "/UserPages/BindProp"
+
+<div class="row">
+	<div class="col-6 border p-3">
+		<h3 class="text-primary">Product Playground</h3>
+		<hr />
+		<select @bind="SelectedProp">
+			@foreach (var prop in Products.ProductProperties)
+			{
+				<option value="@prop.Key"> @prop.Key</option>
+			}
+		</select>
+	</div>
+	<div class="col-6 border p-3">
+		<h3 class="text-primary">Product - Summary</h3>
+		<hr />
+
+		Name	: @Products.Name; <br />
+		Status	: @Products.IsActive  <br />
+		Price	: @Products.price <br />
+		This Product is : @(Products.IsActive ? "Active" : "Inactive") <br />
+
+		IsActive : <input type="checkbox" @bind="@Products.IsActive" /> <br />
+		Input Price :
+		<input type="number" @bind-value="@Products.price" @bind-value:event="oninput" />
+		<br />
+		<br />
+		Product Properties
+		Selected Prop: @SelectedProp
+		<br />
+		@if (string.IsNullOrEmpty(SelectedProp))
+		{
+			<p>Selected Value: @Products.ProductProperties.FirstOrDefault(u => u.Key == SelectedProp).Value</p>
+		}
+
+	</div>
+	<div class="col-12 p-4">
+		<h2 class="text-success">Product Table</h2>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<td>Product Name</td>
+					<td>Price</td>
+					<td>Is Active</td>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach(var prod in ProductList)
+				{
+					<tr>
+						<td><input type="text" @bind=prod.Name @bind:event="oninput" /></td>
+						<td><input type="text" @bind=prod.price @bind:event="oninput" /></td>
+						<td><input type="checkbox" @bind=prod.IsActive /></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+
+		<br />
+		<h2>Product Summary</h2>
+		@foreach(var prod in ProductList)
+		{
+			<p>@prod.Name [@prod.price] is @(prod.IsActive? "Active":"InActive") </p>
+		}
+	</div>
+</div>
+
+
+
+Hidden	: @show <br/>
+
+
+<button class="btn btn-primary" @onclick=@Show>Show Text</button>

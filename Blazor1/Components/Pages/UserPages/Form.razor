@@ -1,0 +1,185 @@
+﻿@page "/UserPages/SampleForm"
+
+
+@using AgendaApp.Models
+@using AgendaApp.Interfaces
+@inject IAgendaService AgendaService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using MudBlazor
+
+<PageTitle>Agenda Management</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" Class="mb-4">Agenda Management</MudText>
+    
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">Agendas</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          StartIcon="Icons.Material.Filled.Add"
+                          OnClick="OpenCreateDialog">
+                    Add New Agenda
+                </MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        
+        <MudCardContent>
+            <MudSwitch @bind-Checked="showInactiveItems" 
+                      Label="Show Inactive Items" 
+                      Color="Color.Primary"
+                      Class="mb-3" />
+            
+            <MudDataGrid Items="@filteredAgendas" 
+                        Filterable="true" 
+                        SortMode="SortMode.Multiple"
+                        Loading="@loading"
+                        Dense="true">
+                
+                <Columns>
+                    <PropertyColumn Property="x => x.StartTime" 
+                                  Title="Start Time" 
+                                  Format="dd/MM/yyyy HH:mm" />
+                    <PropertyColumn Property="x => x.EndTime" 
+                                  Title="End Time" 
+                                  Format="dd/MM/yyyy HH:mm" />
+                    <PropertyColumn Property="x => x.AgendaItem" Title="Agenda" />
+                    <PropertyColumn Property="x => x.Active" Title="Status">
+                        <CellTemplate>
+                            <MudChip Color="@(context.Item.Active ? Color.Success : Color.Error)" 
+                                    Size="Size.Small">
+                                @(context.Item.Active ? "Active" : "Inactive")
+                            </MudChip>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.InsertBy" Title="Created By" />
+                    <PropertyColumn Property="x => x.InsertDate" 
+                                  Title="Created Date" 
+                                  Format="dd/MM/yyyy HH:mm" />
+                    <TemplateColumn CellClass="d-flex justify-end" Sortable="false">
+                        <CellTemplate>
+                            <MudButtonGroup Size="Size.Small" Variant="Variant.Outlined">
+                                <MudIconButton Icon="Icons.Material.Filled.Edit" 
+                                             Color="Color.Primary"
+                                             Size="Size.Small"
+                                             OnClick="@(() => OpenEditDialog(context.Item))" />
+                                <MudIconButton Icon="Icons.Material.Filled.Delete" 
+                                             Color="Color.Error"
+                                             Size="Size.Small"
+                                             Disabled="@(!context.Item.Active)"
+                                             OnClick="@(() => DeleteAgenda(context.Item))" />
+                            </MudButtonGroup>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+            </MudDataGrid>
+        </MudCardContent>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private List<Agenda> agendas = new();
+    private IEnumerable<Agenda> filteredAgendas => showInactiveItems ? agendas : agendas.Where(a => a.Active);
+    private bool loading = true;
+    private bool showInactiveItems = false;
+    private string currentUser = "System"; // In real app, get from authentication
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgendas();
+    }
+
+    private async Task LoadAgendas()
+    {
+        loading = true;
+        try
+        {
+            agendas = (await AgendaService.GetAllAgendasAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading agendas: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<AgendaDialog>
+        {
+            { x => x.Agenda, new Agenda { InsertBy = currentUser } },
+            { x => x.IsEdit, false }
+        };
+
+        var dialog = await DialogService.ShowAsync<AgendaDialog>("Create New Agenda", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadAgendas();
+            Snackbar.Add("Agenda created successfully!", Severity.Success);
+        }
+    }
+
+    private async Task OpenEditDialog(Agenda agenda)
+    {
+        var parameters = new DialogParameters<AgendaDialog>
+        {
+            { x => x.Agenda, new Agenda
+                {
+                    Id = agenda.Id,
+                    StartTime = agenda.StartTime,
+                    EndTime = agenda.EndTime,
+                    AgendaItem = agenda.AgendaItem,
+                    Active = agenda.Active,
+                    InsertBy = agenda.InsertBy,
+                    InsertDate = agenda.InsertDate,
+                    UpdateBy = currentUser
+                }
+            },
+            { x => x.IsEdit, true }
+        };
+
+        var dialog = await DialogService.ShowAsync<AgendaDialog>("Edit Agenda", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadAgendas();
+            Snackbar.Add("Agenda updated successfully!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteAgenda(Agenda agenda)
+    {
+        var parameters = new DialogParameters<MudDialog>
+        {
+            { "ContentText", $"Are you sure you want to delete the agenda: '{agenda.AgendaItem}'? This will mark it as inactive." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<MudDialog>("Confirm Delete", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            if (await AgendaService.DeleteAgendaAsync(agenda.Id, currentUser))
+            {
+                await LoadAgendas();
+                Snackbar.Add("Agenda deleted successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Error deleting agenda!", Severity.Error);
+            }
+        }
+    }
+}

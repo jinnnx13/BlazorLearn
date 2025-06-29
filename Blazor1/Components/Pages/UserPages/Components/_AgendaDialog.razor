@@ -1,0 +1,149 @@
+﻿@using AgendaApp.Models
+@using AgendaApp.Interfaces
+@inject IAgendaRepository AgendaService
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="form" @bind-IsValid="@isValid" @bind-Errors="@errors">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="Start Date" 
+                                 @bind-Date="startDate" 
+                                 Required="true"
+                                 RequiredError="Start date is required" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTimePicker Label="Start Time" 
+                                 @bind-Time="startTime" 
+                                 Required="true"
+                                 RequiredError="Start time is required" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudDatePicker Label="End Date" 
+                                 @bind-Date="endDate" 
+                                 Required="true"
+                                 RequiredError="End date is required" />
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudTimePicker Label="End Time" 
+                                 @bind-Time="endTime" 
+                                 Required="true"
+                                 RequiredError="End time is required" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField Label="Agenda Item" 
+                                @bind-Value="Agenda.AgendaItem" 
+                                Required="true"
+                                RequiredError="Agenda item is required"
+                                MaxLength="500"
+                                Lines="3"
+                                Counter="500" />
+                </MudItem>
+                @if (IsEdit)
+                {
+                    <MudItem xs="12">
+                        <MudSwitch @bind-Checked="Agenda.Active" 
+                                 Label="Active" 
+                                 Color="Color.Primary" />
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                  OnClick="Submit" 
+                  Disabled="@(!isValid || submitting)">
+            @if (submitting)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-2">Processing...</MudText>
+            }
+            else
+            {
+                <MudText>@(IsEdit ? "Update" : "Create")</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Agenda Agenda { get; set; } = new();
+    [Parameter] public bool IsEdit { get; set; }
+
+    private MudForm form = null!;
+    private bool isValid;
+    private string[] errors = Array.Empty<string>();
+    private bool submitting;
+
+    private DateTime? startDate;
+    private TimeSpan? startTime;
+    private DateTime? endDate;
+    private TimeSpan? endTime;
+
+    protected override void OnInitialized()
+    {
+        if (IsEdit)
+        {
+            startDate = Agenda.StartTime.Date;
+            startTime = Agenda.StartTime.TimeOfDay;
+            endDate = Agenda.EndTime.Date;
+            endTime = Agenda.EndTime.TimeOfDay;
+        }
+        else
+        {
+            startDate = DateTime.Today;
+            endDate = DateTime.Today;
+            startTime = TimeSpan.FromHours(9);
+            endTime = TimeSpan.FromHours(10);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private async Task Submit()
+    {
+        if (!isValid)
+            return;
+
+        submitting = true;
+
+        try
+        {
+            // Combine date and time
+            Agenda.StartTime = startDate!.Value.Date.Add(startTime!.Value);
+            Agenda.EndTime = endDate!.Value.Date.Add(endTime!.Value);
+
+            // Validate time range
+            if (!await AgendaService.ValidateAgendaTimeAsync(Agenda.StartTime, Agenda.EndTime, IsEdit ? Agenda.Id : null))
+            {
+                errors = new[] { "The selected time conflicts with an existing agenda or start time is after end time." };
+                return;
+            }
+
+            if (IsEdit)
+            {
+                await AgendaService.UpdateAgendaAsync(Agenda);
+            }
+            else
+            {
+                await AgendaService.CreateAgendaAsync(Agenda);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            errors = new[] { ex.Message };
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}
