@@ -2,6 +2,512 @@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Management System Preview</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-Welcome to your new app.
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #594ae2;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4c3ed4;
+            transform: translateY(-1px);
+        }
+
+        .btn-icon {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-icon.edit {
+            color: #594ae2;
+        }
+
+        .btn-icon.delete {
+            color: #dc3545;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .switch-container {
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .switch-input {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .switch-input.active {
+            background: #594ae2;
+        }
+
+        .switch-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .switch-input.active .switch-slider {
+            transform: translateX(20px);
+        }
+
+        .data-grid {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .data-grid table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-grid th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .data-grid td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-grid tr:hover {
+            background: #f8f9fa;
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .chip.active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .chip.inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control {
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #594ae2;
+            box-shadow: 0 0 0 2px rgba(89, 74, 226, 0.1);
+        }
+
+        .form-control.textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #594ae2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Agenda Management System</h1>
+            <p>Manage your schedules and appointments efficiently</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Agendas</h2>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <i class="fas fa-plus"></i>
+                    Add New Agenda
+                </button>
+            </div>
+
+            <div class="card-content">
+                <div class="switch-container">
+                    <label class="switch" onclick="toggleInactiveItems()">
+                        <div class="switch-input" id="switchInput">
+                            <div class="switch-slider"></div>
+                        </div>
+                        <span>Show Inactive Items</span>
+                    </label>
+                </div>
+
+                <div class="data-grid">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Agenda</th>
+                                <th>Status</th>
+                                <th>Created By</th>
+                                <th>Created Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agendaTableBody">
+                            <tr>
+                                <td>28/06/2025 09:00</td>
+                                <td>28/06/2025 10:30</td>
+                                <td>Weekly Team Meeting - Sprint Planning</td>
+                                <td><span class="chip active">Active</span></td>
+                                <td>John Smith</td>
+                                <td>25/06/2025 14:30</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-icon edit" onclick="openEditModal()" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon delete" onclick="confirmDelete()" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>28/06/2025 14:00</td>
+                                <td>28/06/2025 15:00</td>
+                                <td>Client Presentation - Q2 Results</td>
+                                <td><span class="chip active">Active</span></td>
+                                <td>Sarah Johnson</td>
+                                <td>26/06/2025 10:15</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-icon edit" onclick="openEditModal()" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon delete" onclick="confirmDelete()" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>29/06/2025 11:00</td>
+                                <td>29/06/2025 12:00</td>
+                                <td>Budget Review Meeting</td>
+                                <td><span class="chip active">Active</span></td>
+                                <td>Mike Davis</td>
+                                <td>27/06/2025 16:45</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-icon edit" onclick="openEditModal()" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon delete" onclick="confirmDelete()" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="inactive-row hidden">
+                                <td>25/06/2025 13:00</td>
+                                <td>25/06/2025 14:00</td>
+                                <td>Cancelled Training Session</td>
+                                <td><span class="chip inactive">Inactive</span></td>
+                                <td>Anna Wilson</td>
+                                <td>20/06/2025 09:30</td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-icon edit" onclick="openEditModal()" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn-icon delete" disabled title="Already Deleted">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div class="modal-overlay hidden" id="agendaModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Create New Agenda</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="agendaForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" value="2025-06-28" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="startTime" value="09:00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" value="2025-06-28" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Time</label>
+                            <input type="time" class="form-control" id="endTime" value="10:00" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label class="form-label">Agenda Item</label>
+                            <textarea class="form-control textarea" id="agendaItem" placeholder="Enter agenda details..." required></textarea>
+                            <small style="color: #6c757d; margin-top: 4px;">0/500 characters</small>
+                        </div>
+                        <div class="form-group full-width" id="activeGroup" style="display: none;">
+                            <label class="switch">
+                                <div class="switch-input active" id="activeSwitch">
+                                    <div class="switch-slider"></div>
+                                </div>
+                                <span>Active</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAgenda()">
+                    <i class="fas fa-save"></i>
+                    <span id="saveButtonText">Create</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="modal-overlay hidden" id="loadingModal">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+</body>
